@@ -6,12 +6,12 @@ import (
 	"github.com/go-redis/redis"
 )
 
-type LockManager struct {
+type LockFactory struct {
 	redisClient *redis.Client
 }
 
-func New(r *redis.Client) *LockManager {
-	return &LockManager{r}
+func New(r *redis.Client) *LockFactory {
+	return &LockFactory{r}
 }
 
 type LockOptions struct {
@@ -19,7 +19,7 @@ type LockOptions struct {
 	MaxWaitTime  time.Duration
 }
 
-func (m *LockManager) NewLock(name string, options *LockOptions) *Lock {
+func (m *LockFactory) Lock(name string, options *LockOptions) *Lock {
 	if options == nil {
 		options = &LockOptions{
 			time.Duration(5) * time.Second,
