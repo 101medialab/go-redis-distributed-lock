@@ -7,7 +7,7 @@ import (
 )
 
 type LockFactory struct {
-	redisClient *redis.Client
+	RedisClient *redis.Client  `inject:""`
 }
 
 func New(r *redis.Client) *LockFactory {
@@ -32,14 +32,14 @@ func (m *LockFactory) Lock(name string, options *LockOptions) *Lock {
 
 	// Recessive checking
 	for _, p := range []float32{0.25, 0.2, 0.15, 0.1, 0.1, 0.1, 0.05, 0.05, 0} {
-		ok, err := m.redisClient.SetNX(name, token, options.LockDuration).Result()
+		ok, err := m.RedisClient.SetNX(name, token, options.LockDuration).Result()
 		if err != nil {
 			panic(err)
 		}
 
 		if ok {
 			return &Lock{
-				m.redisClient,
+				m.RedisClient,
 				name,
 				token,
 			}
