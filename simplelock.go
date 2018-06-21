@@ -1,4 +1,4 @@
-package simplelock
+package redisLock
 
 import (
 	"time"
