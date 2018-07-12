@@ -7,7 +7,7 @@ import (
 )
 
 type LockFactory struct {
-	RedisClient *redis.Client  `inject:""`
+	RedisClient *redis.Client `inject:""`
 }
 
 func New(r *redis.Client) *LockFactory {
@@ -23,7 +23,7 @@ func (m *LockFactory) Lock(name string, options *LockOptions) *Lock {
 	if options == nil {
 		options = &LockOptions{
 			time.Duration(5) * time.Second,
-			time.Duration(5) * time.Second + time.Duration(100) * time.Millisecond,
+			time.Duration(5)*time.Second + time.Duration(100)*time.Millisecond,
 		}
 	}
 
@@ -34,7 +34,11 @@ func (m *LockFactory) Lock(name string, options *LockOptions) *Lock {
 	for _, p := range []float32{0.25, 0.2, 0.15, 0.1, 0.1, 0.1, 0.05, 0.05, 0} {
 		ok, err := m.RedisClient.SetNX(name, token, options.LockDuration).Result()
 		if err != nil {
-			panic(err)
+			time.Sleep(time.Second * 2)
+
+			println(`redisLock::Lock failed: ` + err.Error(), `retrying after 2 seconds`)
+
+			return m.Lock(name, options)
 		}
 
 		if ok {
@@ -57,8 +61,8 @@ func (m *LockFactory) Lock(name string, options *LockOptions) *Lock {
 
 type Lock struct {
 	redisClient *redis.Client
-	name string
-	token string
+	name        string
+	token       string
 }
 
 func (l *Lock) GetName() string {
@@ -81,6 +85,10 @@ func (l *Lock) Release() {
 	).Err()
 
 	if err != nil {
-		panic(err)
+		time.Sleep(time.Second * 2)
+
+		println(`redisLock::Release failed: ` + err.Error(), `retrying after 2 seconds`)
+
+		l.Release()
 	}
 }
